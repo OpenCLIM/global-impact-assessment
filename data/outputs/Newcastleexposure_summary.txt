@@ -1,0 +1,10 @@
+Summary of Exposure Analysis for: /data/inputs/run/test/run_R1C1_SurfaceMaps_R1_C1_max_depth_clip.csv
+
+Number of Buildings: 2282
+Grid Resolution: 5.0m
+Buffer Distance: 100% or5.0m
+
+Low: 1979
+Medium: 178
+High: 125
+
