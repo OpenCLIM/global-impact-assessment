@@ -1,11 +1,11 @@
 kind: M
 api_version: v1beta3
 metadata:
-  display_name: Urban_Flooding:Flood Impact Assessment
+  display_name: GLobal_Urban_Flooding:Flood Impact Assessment
   contact_point_name: Olivia Butters
   contact_point_email: olivia.butters@newcastle.ac.uk
   publisher: Newcastle University
-  name: flood-impact-assessment
+  name: global-flood-impact-assessment
   summary: Assess flood impacts using OS MasterMap
   description:
     Calculates maximum depths, velocity depth products (VD) and flooded perimeters of flooded buildings.
@@ -35,58 +35,7 @@ spec:
         description: The city/location of interest.
         required: false
 
-      - name: YEAR
-        title: Year
-        type: number
-        description: The year of interest (range 2030-2080).
-        required: false
-        options:
-          - name: 2020
-            title: 2020
-          - name: 2035
-            title: 2035
-          - name: 2050
-            title: 2050
-          - name: 2055
-            title: 2055
-          - name: 2065
-            title: 2065
-          - name: 2080
-            title: 2080
-          - name: 2085
-            title: 2085
-
-      - name: SSP
-        title: SSP
-        type: string
-        description: The socio-economic pathway of interest.
-        required: false
-        options:
-          - name: 'baseline'
-            title: 'baseline'
-          - name: 'ssp1'
-            title: 'ssp1'
-          - name: 'ssp2'
-            title: 'ssp2'
-          - name: 'ssp3'
-            title: 'ssp3'
-          - name: 'ssp4'
-            title: 'ssp4'
-          - name: 'ssp5'
-            title: 'ssp5'
-      
-      - name: TOTAL_DEPTH
-        title: Total depth (mm)
-        description:
-          The total depth of rainfall during the event.
-          #This parameter is only used if `RAINFALL_MODE` is set to "total_depth".
-        type: number
-        default: 40
-        required: false
-        min: 10
-        max: 100
-
-      - name: DTM_RESOLUTION
+      - name: DTM_SIZE
         title: DTM Resolution (m)
         description:
           The size of each cell in the DTM raster.
