@@ -216,7 +216,14 @@ if len(parameter_file) != 0 :
         location=location_row['VALUE'].values[0]
         print('LOCATION:',location)
     else:    
-        dtmres = int(os.getenv('LOCATION'))
+        location = int(os.getenv('LOCATION'))
+    if 'COUNTRY' in all_parameters.values:
+        country_row = all_parameters[all_parameters['PARAMETER']=='COUNTRY']
+        country=country_row['VALUE'].values[0]
+        print('COUNTRY:',country)
+    else:    
+        country = int(os.getenv('COUNTRY'))
+
 
 
 dst_crs = 'epsg:' + projection
@@ -552,23 +559,10 @@ if len(constraints)==1:
 all_data.to_csv(
     os.path.join(outputs_path, '1km_data_'+ location +'.csv'), index=False,  float_format='%g') 
 
-# If one has, move the file to the outputs path
-if len(parameter_file) != 0 :
-    for i in range(0,len(parameter_file)):
-        file_path = os.path.splitext(parameter_file[i])
-        print('Filepath:',file_path)
-        filename=file_path[0].split("/")
-        print('Filename:',filename[-1])
-        
-        src = parameter_file[0]
-        print('src:',src)
-        dst = os.path.join(parameter_outputs_path,filename[-1] + '.csv')
-        print('dst,dst')
-        shutil.copy(src,dst)
+all_parameters.loc[len(all_parameters.index)] = ['THRESHOLD',threshold] 
 
+print('all_parameters:',all_parameters)
 
-# Print all of the input parameters to an excel sheet to be read in later
-with open(os.path.join(parameter_outputs_path,'impact-parameters.csv'), 'w') as f:
-    f.write('PARAMETER,VALUE\n')
-    f.write('THRESHOLD,%s\n' %threshold)
+all_parameters.to_csv(
+    os.path.join(parameter_outputs_path, country+ '-' + location +'-parameters.csv'), index=False,  float_format='%g') 
 
