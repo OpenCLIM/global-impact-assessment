@@ -57,16 +57,6 @@ spec:
         path: inputs/flood_impact
         required: false
 
-      - name: UPRN
-        description:
-          Lookup between TOID and UPRN identifiers (CSV).
-          If provided, this is used to lookup the Unique Property Reference Numbers (UPRNs) for each building.
-          Each building may have more than one UPRN and therefore more than one row in the output CSV.
-        default:
-          - 9c1fbe4d-c322-465d-9c9f-6d34da30e8a6
-        path: inputs/uprn
-        required: false
-
       - name: Depth/damage curves
         description:
           CSV files named residential.csv and nonresidential.csv relating depth (m) to damage (£/m2)
@@ -90,14 +80,6 @@ spec:
         description:
           Maximum depth data in csv format.
         path: inputs/run/test
-        required: false
-
-      - name: Grids
-        description:
-          The 1km OS grid cells for the UK.
-        default:
-          - 0c6275e1-1557-4b5a-9548-7c6c87309368
-        path: inputs/grid/
         required: false
         
   outputs:
