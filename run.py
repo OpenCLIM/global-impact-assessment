@@ -270,6 +270,8 @@ buffer = 5
 # Identify the building files for the baseline buildings and new buildings allocated by the udm model (if available)
 buildings = glob(flood_impact_path + "/*.gpkg", recursive = True)
     
+#import the field of buildings
+builds_field1 = os.getenv('BUILDING_ID') #check the field from the shapefile
 
 # Read in the baseline builings
 with rio.open(archive[0],'r+') as max_depth :
@@ -280,15 +282,9 @@ with rio.open(archive[0],'r+') as max_depth :
     e_builds = gpd.read_file(e_builds, bbox=max_depth.bounds)
     # Redefine the toid number to include osgb
     columns=list(e_builds.columns)
-    if 'toid_number' in columns:
-        e_builds['toid'] = 'osgb' + e_builds['toid_number'].astype(str)
-        e_builds.pop('toid_number')
-    if 'toid_numbe' in columns:
-        e_builds['toid'] = 'osgb' + e_builds['toid_numbe'].astype(str)
-        e_builds.pop('toid_numbe')
-    if 'building_use' in columns:
-        e_builds['building_u'] = e_builds['building_use']
-        e_builds.pop('building_use')
+    if builds_field1 in columns:
+        e_builds['toid'] = e_builds[builds_field1].astype(str)
+        e_builds.pop(builds_field1)
 
     # If there are udm buildings within the flood impact folder, read them in
     if len(buildings) == 2 :
@@ -297,9 +293,7 @@ with rio.open(archive[0],'r+') as max_depth :
         # Redefine the index
         u_builds['index'] = u_builds.index
         # Assign a toid
-        u_builds['toid'] = 'osgb' + u_builds['index'].astype(str)
-        # Note all buildings as type 'residential'
-        u_builds['building_u'] = 'residential'
+        u_builds['toid'] = 'toid_' + u_builds['index'].astype(str)
         u_builds.crs = e_builds.crs
         # Merge the existing and building datasets
         all_buildings = u_builds.append(e_builds)
@@ -312,10 +306,6 @@ with rio.open(archive[0],'r+') as max_depth :
     for n in all_buildings.columns:
         cols_list.append(n)
     print('cols_list:',cols_list)
-
-    #import the field of buildings
-    builds_field1 = "toid" #check the field from the shapefile
-    builds_field2 = "building_use" #check the field from the shapefile
     
     if dtmres == 5:
         buffer_value = 100
@@ -323,6 +313,7 @@ with rio.open(archive[0],'r+') as max_depth :
         buffer_value = 150
     print('buffer_value:',buffer_value)
     
+    builds_field1 = 'toid'
     process_data('Risk_Levels')
     
     #Create a copy of the original geometry
@@ -381,40 +372,16 @@ with rio.open(archive[0],'r+') as max_depth :
                                 
     # Read in the preassigned damage curves
     residential = pd.read_csv(os.path.join(dd_curves_path, 'residential.csv'))
-    nonresidential = pd.read_csv(os.path.join(dd_curves_path, 'nonresidential.csv'))
 
-    # Calculate damage based on property types
-    res_data = all_buildings1.loc[all_buildings1['building_u']=='residential']
-    non_res_data = all_buildings1.loc[all_buildings1['building_u']!='residential']
-
-    res_data['damage'] = (np.interp(
-        res_data.depth, residential.depth, residential.damage) * res_data.original_area).round(0)
-    non_res_data['damage'] = (np.interp(
-        non_res_data.depth, nonresidential.depth, nonresidential.damage) * non_res_data.original_area).round(0).astype(int)
-
-    all_buildings1=res_data.append(non_res_data)
-
-
-    # # Lookup UPRN if available
-    # if len(uprn_lookup) > 0:
-    #     uprn = pd.read_csv(uprn_lookup[0], usecols=['IDENTIFIER_1', 'IDENTIFIER_2'],
-    #                     dtype={'IDENTIFIER_1': str}).rename(columns={'IDENTIFIER_1': 'uprn',
-    #                                                                     'IDENTIFIER_2': 'toid'})
-    #     if len(uprn) != 0:
-    #         all_buildings1 = all_buildings1.merge(uprn, how='left')
+    all_buildings1['damage'] = (np.interp(
+       all_buildings1.depth,residential.depth, residential.damage)*all_buildings1.original_area).round(0)
 
     # Create a new data frame called centres which is a copy of buildings
-    building_centroid=all_buildings1.filter(['building_u','geometry_copy','damage','depth','Class'])
+    building_centroid=all_buildings1.filter(['geometry_copy','damage','depth','Class'])
     building_centroid['geometry'] = building_centroid['geometry_copy']
     building_centroid.pop('geometry_copy')
     building_centroid.crs=e_builds.crs
     all_buildings1.pop('geometry_copy')
-
-    building_centroid['building_u']=building_centroid['building_u'].fillna('unknown')
-    
-    #Save building centroids and their geometrys to CSV
-    # building_centroid.to_csv(
-    #     os.path.join(outputs_path, 'affected_buildings_' + location + '_' + ssp + '_'  + year + '_' + depth1 +'mm.csv'), index=False,  float_format='%g') 
     
     # Read in the 1km OS grid cells
     km_grid = glob(grid_path + "/*.gpkg", recursive = True)
@@ -436,9 +403,6 @@ pointsInPolygon=pointsInPolygon.fillna(0)
 # pointsInPolygon.to_csv(
 #             os.path.join(outputs_path, 'pointsInPolygon_' + location + '_' + ssp + '_'  + year + '_' + depth1 +'.csv'), index=False,  float_format='%g') 
 
-dfpivot = pd.pivot_table(pointsInPolygon,index='tile_name',
-                        columns='building_u',aggfunc={'building_u':len}, fill_value=0)
-
 dfpivot3 = pd.pivot_table(pointsInPolygon,index='tile_name',
                         columns='Class',aggfunc={'Class':len}, fill_value=0)
 
@@ -446,84 +410,34 @@ dfpivot2 = pd.pivot_table(pointsInPolygon,index='tile_name', aggfunc={'damage':n
                                                                     'depth':np.average,
                                                                     'index_right':len}, fill_value=0)
 
-stacked = dfpivot.stack(level = [0])
 stacked2 = dfpivot3.stack(level = [0])
 
-half_data=pd.DataFrame()
 half_data2=pd.DataFrame()
 all_data=pd.DataFrame()
 
-half_data = pd.merge(stacked,grid, on='tile_name')
 half_data2 = pd.merge(stacked2,grid, on='tile_name')
-all_data = pd.merge(dfpivot2,half_data, on='tile_name')
-all_data = pd.merge(all_data,half_data2, on='tile_name')
-
-all_data.pop('0_x')
-all_data.pop('0_y')
-# all_data.pop('id_y')
-all_data.pop('geometry_y')
+all_data = pd.merge(dfpivot2,half_data2, on='tile_name')
 
 check = list(all_data.columns.values)
 
 print('check:',check)
 
-#all_data['Total_Building_Count'] = all_data['index_right']
+all_data['Total_Building_Count'] = all_data['index_right']
 all_data.pop('index_right')
-
-if 'residential' in check:
-    all_data['Residential_Count'] = all_data['residential']
-    all_data.pop('residential')
-else:
-    all_data['Residential_Count']=[0 for n in range(len(all_data))]
-
-if 'non-residential' in check:
-    all_data['Non_Residential_Count'] = all_data['non-residential']
-    all_data.pop('non-residential')
-else:
-    all_data['Non_Residential_Count']=[0 for n in range(len(all_data))]
-
-if 'mixed' in check:
-    all_data['Mixed_Count'] = all_data['mixed']
-    all_data.pop('mixed')
-else:
-    all_data['Mixed_Count']=[0 for n in range(len(all_data))]
-
-if 'unclassified' in check:   
-    all_data['Unclassified_Count'] = all_data['unclassified']
-    all_data.pop('unclassified')
-else:
-    all_data['Unclassified_Count']=[0 for n in range(len(all_data))]
-
-if 'unknown' in check:   
-    all_data['Unknown_Count'] = all_data['unknown']
-    all_data.pop('unknown')
-else:
-    all_data['Unknown_Count']=[0 for n in range(len(all_data))]
-
-all_data['Total_Building_Count'] = (all_data['Residential_Count'] + all_data['Non_Residential_Count'] +
-        all_data['Mixed_Count'] + all_data['Unclassified_Count'] + all_data['Unknown_Count'])
-
-all_data['Residential'] = (all_data['Residential_Count'])
-all_data['Commerical'] = (all_data['Non_Residential_Count']+all_data['Mixed_Count'])
-all_data['Unknown'] = (all_data['Unclassified_Count']+all_data['Unknown_Count'])
 
 all_data['Damage'] = all_data['damage']
 all_data.pop('damage')
-all_data['Depth'] = all_data['depth']
 all_data.pop('depth')
+
+all_data = all_data[all_data['Damage']!=0]
 
 all_data['Damage_Rank'] = all_data['Damage'].rank(ascending=False)
 all_data['Building_Rank'] = all_data['Total_Building_Count'].rank(ascending=False)
 
-all_data = all_data[all_data['Damage']!=0]
+all_data = all_data[['tile_name','geometry','B) Medium','C) High','Total_Building_Count',
+                     'Damage','Damage_Rank','Building_Rank']]
 
-all_data.pop('Damage')
-all_data.pop('Depth')
-all_data.pop('Residential_Count')
-all_data.pop('Non_Residential_Count')
-all_data.pop('Mixed_Count')
-all_data.pop('Unclassified_Count')
-all_data.pop('Unknown_Count')
+# all_data = all_data[all_data['Damage']!=0]
 
 # If linked to UDM results, pass the udm details through to the outputs
 udm_para_out_path = os.path.join(outputs_path, 'udm_parameters')
@@ -601,4 +515,3 @@ if len(fi_file) != 0 :
         src = fi_file[i]
         dst = os.path.join(fi_output_path,filename[-1] + '.gpkg')
         shutil.copy(src,dst)
-
