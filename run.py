@@ -36,6 +36,10 @@ uprn_lookup = glob(os.path.join(inputs_path, 'uprn', '*.csv'))
 parameters_path=os.path.join(inputs_path,'parameters')
 udm_para_in_path = os.path.join(inputs_path, 'udm_parameters')
 
+grid_path = os.path.join(inputs_path,'grid')
+if not os.path.exists(grid_path):
+    os.mkdir(grid_path)
+
 categorys_path = os.path.join(inputs_path, 'categories')
 if not os.path.exists(categorys_path):
     os.mkdir(categorys_path)
