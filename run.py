@@ -384,7 +384,7 @@ with rio.open(archive[0],'r+') as max_depth :
     all_buildings1.pop('geometry_copy')
     
     # Read in the 1km OS grid cells
-    km_grid = glob(grid_path + "/*.gpkg", recursive = True)
+    km_grid = glob(grid_path + "/grid.gpkg", recursive = True)
     grid = gpd.read_file(km_grid[0],bbox=max_depth.bounds)
     grid.set_crs(dst_crs, inplace=True)
 
