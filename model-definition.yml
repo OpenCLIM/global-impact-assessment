@@ -89,12 +89,6 @@ spec:
           Maximum depth data in csv format.
         path: inputs/run/test
         required: false
-
-      - name: Grids
-        description:
-          The 1km OS grid cells for the UK.
-        path: inputs/grid/
-        required: false
         
         
   outputs:
