@@ -41,6 +41,14 @@ spec:
           The size of each cell in the DTM raster.
         type: number
         required: false
+
+      - name: BUILDING_ID
+        title: Building_ID_name
+        description:
+          The ID column name from the building dataset.
+        type: string
+        default: 'id'
+        required: true
         
     dataslots:
       - name: Parameters
